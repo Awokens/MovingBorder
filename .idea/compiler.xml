@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Gradle Imported" enabled="true">
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/dev.jorel/commandapi-annotations/9.3.0/7366c65a0eb5952af6b47c8a288f593ae0565aad/commandapi-annotations-9.3.0.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/dev.jorel/commandapi-bukkit-core/9.3.0/3b75c0b0b3b61d0a4485f7f856dddad16d8b270e/commandapi-bukkit-core-9.3.0.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/dev.jorel/commandapi-core/9.3.0/472e8ed8eb299767a9b2db8eebfff7f0df16937a/commandapi-core-9.3.0.jar" />
+        </processorPath>
+        <module name="MovingBorder.main" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel target="17" />
+  </component>
+</project>

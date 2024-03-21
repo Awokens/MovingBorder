@@ -1,0 +1,6 @@
+name: MovingBorder
+version: '${version}'
+main: com.awokens.movingborder.MovingBorder
+api-version: '1.20'
+authors: [Awokens]
+description: Open-source Wife remake project. Use to your own discretion.
