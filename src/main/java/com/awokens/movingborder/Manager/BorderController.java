@@ -1,5 +1,6 @@
 package com.awokens.movingborder.Manager;
 
+import de.tr7zw.changeme.nbtapi.NBTEntity;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -9,6 +10,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Panda;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -23,6 +25,8 @@ public class BorderController {
     private World world;
 
     private Entity entity;
+
+    private Location positionTracker;
 
     private EntityType entityType;
 
@@ -60,6 +64,8 @@ public class BorderController {
         entity.setGlowing(true);
         entity.setCustomNameVisible(true);
 
+        NBTEntity nbt = new NBTEntity(entity);
+        nbt.setBoolean("Saddle", true);
 
         this.entity = entity; // set entity instance to new entity
 
@@ -69,6 +75,8 @@ public class BorderController {
         border.setDamageAmount(getBorderDamage());
         border.setDamageBuffer(getBorderBuffer());
 
+
+        positionTracker = entity.getLocation();
         /*
         run periodical event where the border is updated to the current position of the entity
          */
@@ -109,6 +117,19 @@ public class BorderController {
                     return;
                 }
 
+                if (getEntity().getTicksLived() > (20 * 60 * 5)) {
+                    getEntity().setTicksLived(1);
+                    getEntity().teleport(getSafeBorderCenter());
+                }
+
+                double distance = positionTracker.distance(entity.getLocation());
+
+                if (distance > 15) {
+                    positionTracker = entity.getLocation();
+                    return; // skip updating because border is moving too fast
+                }
+
+                positionTracker = entity.getLocation();
                 // set the world border position to the controller mob's current position
                 getWorld().getWorldBorder().setCenter(getEntity().getLocation().clone());
 
@@ -198,17 +219,20 @@ public class BorderController {
 
             location.setY(i); // set y-level (from minHeight to maxHeight)
             Block block = location.getBlock();
-            if (!block.getType().isSolid()) {
-                if (!block.getRelative(BlockFace.UP).getType().isSolid()) {
-                    safeBlock = block;
-                    break;
-                }
+
+            if (safeBlock != null && i > getWorld().getSeaLevel() - 1 && i < getWorld().getSeaLevel() + 25) {
+                break;
             }
+
+            if (block.getType().isSolid()) continue;
+            if (block.getRelative(BlockFace.UP).getType().isSolid()) continue;
+
+            safeBlock = block;
         }
 
         if (safeBlock == null) {
             // set to the sea/lava level of the world instead
-            safeBlock = location.set(0, (maxHeight > 120 ? 32 : 64), 0).getBlock();
+            safeBlock = location.set(location.x(), (maxHeight > 120 ? 32 : 64), location.z()).getBlock();
         }
         return safeBlock.getLocation();
     }

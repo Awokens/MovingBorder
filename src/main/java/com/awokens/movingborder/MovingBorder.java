@@ -3,14 +3,17 @@ package com.awokens.movingborder;
 import com.awokens.movingborder.Commands.Admin.BorderCmd;
 import com.awokens.movingborder.Commands.Default.EnderChestCmd;
 import com.awokens.movingborder.Commands.Default.TagsCmd;
-import com.awokens.movingborder.Listeners.PassengerEjectOnQuit;
-import com.awokens.movingborder.Listeners.PlayerChat;
+import com.awokens.movingborder.Listeners.Player.Damage;
+import com.awokens.movingborder.Listeners.Player.Join;
+import com.awokens.movingborder.Listeners.Player.Quit;
+import com.awokens.movingborder.Listeners.Player.Chat;
 import com.awokens.movingborder.Manager.BorderController;
 import com.awokens.movingborder.Manager.TagManager;
 import com.samjakob.spigui.SpiGUI;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
@@ -21,7 +24,7 @@ import java.util.logging.Level;
 
 public class MovingBorder extends JavaPlugin {
 
-    private Plugin plugin;
+    private static Plugin plugin;
     private static BorderController WorldController;
     private static BorderController NetherController;
 
@@ -31,8 +34,8 @@ public class MovingBorder extends JavaPlugin {
 
     public static BorderController getWorldController() { return WorldController; }
     public static BorderController getNetherController() { return NetherController; }
-    public Plugin getPlugin() {
-        return this.plugin;
+    public static Plugin getPlugin() {
+        return plugin;
     }
 
     public static SpiGUI GUIManager() { return spiGUI; }
@@ -53,11 +56,15 @@ public class MovingBorder extends JavaPlugin {
     public void onEnable() {
         // Plugin startup logic
 
-        this.plugin = this;
-        this.tagManager = new TagManager(this);
-        this.spiGUI = new SpiGUI(this);
+        plugin = this;
+        tagManager = new TagManager(this);
+        spiGUI = new SpiGUI(this);
 
         CommandAPI.onEnable();
+
+        //Location loc = player.getWorld().locateNearestStructure(player.getLocation(), StructureType.NETHER_FORTRESS, 100, false);
+
+
 
         WorldController = new BorderController(this)
                 .setWorld(getServer().getWorld("world"))
@@ -65,7 +72,9 @@ public class MovingBorder extends JavaPlugin {
                 .setBorderBuffer(5)
                 .setBorderDamage(1)
                 .setEntityType(EntityType.PIG)
-                .setCustomName(Component.text("World Border"))
+                .setCustomName(MiniMessage.miniMessage().deserialize(
+                        "<b><dark_aqua>World</dark_aqua><aqua> Border</aqua></b>"
+                ))
                 .start();
 
         NetherController = new BorderController(this)
@@ -74,13 +83,17 @@ public class MovingBorder extends JavaPlugin {
                 .setBorderBuffer(10)
                 .setBorderDamage(1)
                 .setEntityType(EntityType.STRIDER)
-                .setCustomName(Component.text("Nether Border"))
+                .setCustomName(MiniMessage.miniMessage().deserialize(
+                        "<b><color:#ff3936>Nether</color> <red>Border</red></b>"
+                ))
                 .start();
 
         boolean result = registerListeners(this, List.of(
-                new PlayerChat(),
-                new PassengerEjectOnQuit())
-        );
+                new Chat(),
+                new Quit(),
+                new Join(),
+                new Damage()
+        ));
 
         if (!result) {
             getLogger().log(Level.SEVERE, "Failed to load events");
@@ -94,6 +107,8 @@ public class MovingBorder extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+
+        CommandAPI.onDisable();
 
         getNetherController().getEntity().remove();
         getWorldController().getEntity().remove();

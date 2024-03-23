@@ -1,4 +1,4 @@
-package com.awokens.movingborder.Listeners;
+package com.awokens.movingborder.Listeners.Player;
 
 import com.awokens.movingborder.Manager.TagManager;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -8,7 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-public class PlayerChat implements Listener {
+public class Chat implements Listener {
 
     @EventHandler
     public void event(AsyncChatEvent event) {
