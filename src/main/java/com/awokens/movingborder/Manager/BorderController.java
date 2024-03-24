@@ -220,21 +220,22 @@ public class BorderController {
             location.setY(i); // set y-level (from minHeight to maxHeight)
             Block block = location.getBlock();
 
-            if (safeBlock != null && i > getWorld().getSeaLevel() - 1 && i < getWorld().getSeaLevel() + 25) {
-                break;
-            }
-
             if (block.getType().isSolid()) continue;
             if (block.getRelative(BlockFace.UP).getType().isSolid()) continue;
 
             safeBlock = block;
+
+            if (i >= getWorld().getSeaLevel() - 10) {
+                break;
+            }
+
         }
 
         if (safeBlock == null) {
             // set to the sea/lava level of the world instead
             safeBlock = location.set(location.x(), (maxHeight > 120 ? 32 : 64), location.z()).getBlock();
         }
-        return safeBlock.getLocation();
+        return safeBlock.getLocation().toCenterLocation();
     }
 
 
