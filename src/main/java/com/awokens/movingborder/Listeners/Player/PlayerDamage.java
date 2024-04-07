@@ -7,8 +7,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
-public class Damage implements Listener {
+public class PlayerDamage implements Listener {
 
+
+    private final MovingBorder plugin;
+    public PlayerDamage(MovingBorder plugin) {
+        this.plugin = plugin;
+    }
     @EventHandler
     public void damage(EntityDamageByEntityEvent event) {
 
@@ -17,7 +22,7 @@ public class Damage implements Listener {
 
         if (victim.getUniqueId().compareTo(attacker.getUniqueId()) == 0) return; // same player
 
-        new CombatTagManager(MovingBorder.getPlugin(), victim);
-        new CombatTagManager(MovingBorder.getPlugin(), attacker);
+        new CombatTagManager(plugin, victim);
+        new CombatTagManager(plugin, attacker);
     }
 }

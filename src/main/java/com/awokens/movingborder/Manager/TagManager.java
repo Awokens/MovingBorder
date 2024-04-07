@@ -12,7 +12,6 @@ import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.node.NodeType;
-import net.luckperms.api.node.types.MetaNode;
 import net.luckperms.api.node.types.SuffixNode;
 import net.luckperms.api.query.QueryOptions;
 import org.bukkit.Material;
@@ -26,7 +25,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -148,8 +146,10 @@ public class TagManager {
 
         private final SGMenu TagMenu;
 
-        public TagInventory(Player player) {
-            this.TagMenu = MovingBorder.GUIManager().create("&8Tags", 6);
+        private final MovingBorder plugin;
+        public TagInventory(MovingBorder plugin, Player player) {
+            this.TagMenu = plugin.GUIManager().create("&8Tags", 6);
+            this.plugin = plugin;
 
             // Populate excluded/outer slots
             ItemStack background = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
@@ -163,7 +163,7 @@ public class TagManager {
 
             List<SGButton> buttons = new ArrayList<>();
 
-            for (TagType tag : MovingBorder.getTagManager().getTags()) {
+            for (TagType tag : plugin.getTagManager().getTags()) {
 
                 // tag item
                 ItemStack icon = new ItemStack(Material.NAME_TAG);
@@ -206,7 +206,7 @@ public class TagManager {
                     player.sendMessage(MiniMessage.miniMessage().deserialize(
                             "Selected tag " + tag.getName()
                     ).decoration(TextDecoration.ITALIC, false));
-                    player.openInventory(new TagInventory(player).getTagInventory()); // refresh inventory
+                    player.openInventory(new TagInventory(plugin, player).getTagInventory()); // refresh inventory
                 };
 
                 // button creation w/ listener ^

@@ -12,8 +12,12 @@ import java.util.List;
 
 public class BorderCmd {
 
-    public BorderCmd() {
 
+    private final MovingBorder plugin;
+
+    public BorderCmd(MovingBorder plugin) {
+
+        this.plugin = plugin;
 
         List<Argument<?>> arguments = new ArrayList<>();
         arguments.add(new StringArgument("world").replaceSuggestions(ArgumentSuggestions.strings(
@@ -28,8 +32,8 @@ public class BorderCmd {
                     if (world == null) return;
 
                     switch (world) {
-                        case "world" -> MovingBorder.getWorldController().start();
-                        case "nether" -> MovingBorder.getNetherController().start();
+                        case "world" -> plugin.getWorldController().start();
+                        case "nether" -> plugin.getNetherController().start();
                         default -> {
                             player.sendMessage(MiniMessage.miniMessage().deserialize(
                                 "<red>There is no controller mob for this world"
@@ -53,8 +57,8 @@ public class BorderCmd {
                     if (world == null) return;
 
                     switch (world) {
-                        case "world" -> MovingBorder.getWorldController().getEntity().teleport(player);
-                        case "nether" -> MovingBorder.getNetherController().getEntity().teleport(player);
+                        case "world" -> plugin.getWorldController().getEntity().teleport(player);
+                        case "nether" -> plugin.getNetherController().getEntity().teleport(player);
                         default -> {
                             player.sendMessage(MiniMessage.miniMessage().deserialize(
                                     "<red>There is no controller mob for this world"

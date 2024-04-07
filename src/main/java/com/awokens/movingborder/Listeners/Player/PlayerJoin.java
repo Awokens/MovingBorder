@@ -1,5 +1,6 @@
 package com.awokens.movingborder.Listeners.Player;
 
+import com.awokens.movingborder.Manager.Utils;
 import com.awokens.movingborder.MovingBorder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -17,44 +18,28 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.time.Duration;
 import java.util.Random;
 
-public class Join implements Listener {
+public class PlayerJoin implements Listener {
+
+    private final MovingBorder plugin;
+    public PlayerJoin(MovingBorder plugin) {
+        this.plugin = plugin;
+    }
 
     @EventHandler
     public void joinRTP(PlayerJoinEvent event) {
 
         Player player = event.getPlayer();
 
-        if (!MovingBorder.getWorldController().getWorld().getName().equalsIgnoreCase(player.getWorld().getName()) &&
-                !MovingBorder.getNetherController().getWorld().getName().equalsIgnoreCase(player.getWorld().getName())) return;
+        if (!plugin.getWorldController().getWorld().getName().equalsIgnoreCase(player.getWorld().getName()) &&
+                !plugin.getNetherController().getWorld().getName().equalsIgnoreCase(player.getWorld().getName())) return;
 
         player.setInvulnerable(true);
 
-        World world = MovingBorder.getWorldController().getWorld();
+        Location randomLocation = Utils.randomRespawn();
 
-        WorldBorder border = world.getWorldBorder();
-
-        int size = (int) Math.floor(border.getSize());
-        int radius = size / 2;
-
-        Location center = border.getCenter().clone();
-
-        Location cornerA = center.clone().subtract(radius, 0, radius);
-        Location cornerB = center.clone().add(radius, 0, radius);
-
-        Random random = new Random();
-
-        int minX = (int) cornerA.getX(); // Minimum number
-        int maxX = (int) cornerB.getX(); // Maximum number
-
-        int minZ = (int) cornerA.getZ();
-        int maxZ = (int) cornerB.getZ();
-
-        int ranX = random.nextInt(maxX - minX + 1) + minX;
-        int ranZ = random.nextInt(maxZ - minZ + 1) + minZ;
-
-        Location randomLocation = new Location(world, ranX, 0, ranZ);
-
-        randomLocation = randomLocation.toHighestLocation().add(0, 1, 0);
+        if (randomLocation == null) {
+            randomLocation = plugin.getWorldController().getEntity().getLocation();
+        }
 
         player.teleportAsync(randomLocation).thenRun(new BukkitRunnable() {
             @Override
@@ -111,7 +96,7 @@ public class Join implements Listener {
                     player.showTitle(formatter);
                     player.playSound(player, Sound.BLOCK_DEEPSLATE_TILES_STEP, 1.0F, 1.0F);
                 }
-            }.runTaskLater(MovingBorder.getPlugin(), letterDelay);
+            }.runTaskLater(plugin, letterDelay);
             letterDelay += 2L;
         }
 
@@ -121,7 +106,7 @@ public class Join implements Listener {
                 player.playSound(player, Sound.BLOCK_STONE_PLACE, 1F, 1F);
                 player.playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5F, 1F);
             }
-        }.runTaskLater(MovingBorder.getPlugin(), letterDelay);
+        }.runTaskLater(plugin, letterDelay);
 
         letterDelay += 17L;
 
@@ -140,7 +125,7 @@ public class Join implements Listener {
                 player.showTitle(officialTitle);
                 player.playSound(player, Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 1F, 1F);
             }
-        }.runTaskLater(MovingBorder.getPlugin(), letterDelay);
+        }.runTaskLater(plugin, letterDelay);
 
         letterDelay += 1L;
 
@@ -153,16 +138,15 @@ public class Join implements Listener {
 
                 player.sendMessage(MiniMessage.miniMessage().deserialize(
                         "<newline><b>MOVING BORDER</b><newline><newline>"
-//                                + "→ To view all commands <green>/commands</green><newline>"
-//                                + "→ To toggle specifics <green>/toggle <type></green><newline><newline>"
-                                + "→ This server is underdevelopment<newline>"
-                                + "→ But core features are present.<newline>"
+                                + "→ New here? <green>/wiki</green><newline>"
+                                + "→ To view all commands <green>/commands</green><newline>"
+                                + "→ Save your stuff with <light_purple>/enderchest</light_purple><newline>"
                                 + "<newline>Haven't join our Discord yet?<newline>"
                                 + "→ <color:#308aff><click:open_url:'https://discord.gg/q3BRbWqHgx'>Click this message to join today</click></color><newline>"
                 ));
 
 
             }
-        }.runTaskLater(MovingBorder.getPlugin(), letterDelay);
+        }.runTaskLater(plugin, letterDelay);
     }
 }

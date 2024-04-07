@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.awokens'
-version = '1.0'
+version = '1.3.2'
 
 repositories {
     mavenCentral()
@@ -28,16 +28,13 @@ repositories {
 
 dependencies {
     compileOnly "io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT"
-    compileOnly 'net.luckperms:api:5.4'
+    compileOnly("net.luckperms:api:5.4")
     implementation 'com.samjakob:SpiGUI:1.3.1'
-    implementation 'org.mongodb:mongodb-driver-sync:5.0.0'
     implementation "de.tr7zw:item-nbt-api:2.12.2"
-
     // command api
     compileOnly 'dev.jorel:commandapi-annotations:9.3.0'
     annotationProcessor 'dev.jorel:commandapi-annotations:9.3.0'
     implementation "dev.jorel:commandapi-bukkit-shade:9.3.0"
-
 }
 
 shadowJar {
@@ -45,10 +42,14 @@ shadowJar {
         include dependency("dev.jorel:commandapi-bukkit-shade:9.3.0")
         include dependency("com.samjakob:SpiGUI:1.3.1")
         include dependency("de.tr7zw:item-nbt-api:2.12.2")
+        include dependency("net.luckperms:api:5.4")
     }
-    relocate("dev.jorel.commandapi", "com.awokens.movingborder.api.commandapi")
-    relocate("com.samjakob.spigui", "com.awokens.movingborder.api.spigui")
-    relocate("de.tr7zw.changeme.nbtapi", "com.awokens.movingborder.api.nbt")
+
+    // Shading configurations
+    relocate("net.luckperms:api:5.4", "com.github.awokens.voidsurvival.api.luckperms")
+    relocate("dev.jorel.commandapi", "com.github.awokens.voidsurvival.api.commandapi")
+    relocate("com.samjakob.spigui", "com.github.awokens.voidsurvival.api.spigui")
+    relocate("de.tr7zw.changeme.nbtapi", "com.github.awokens.voidsurvival.api.nbt")
 }
 def targetJavaVersion = 17
 java {

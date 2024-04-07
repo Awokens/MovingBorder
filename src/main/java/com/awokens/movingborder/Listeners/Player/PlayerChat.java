@@ -8,7 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-public class Chat implements Listener {
+public class PlayerChat implements Listener {
 
     @EventHandler
     public void event(AsyncChatEvent event) {

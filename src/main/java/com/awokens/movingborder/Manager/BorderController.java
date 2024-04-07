@@ -2,19 +2,23 @@ package com.awokens.movingborder.Manager;
 
 import de.tr7zw.changeme.nbtapi.NBTEntity;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.WorldBorder;
+import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Panda;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.*;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+
+import java.util.Objects;
 
 public class BorderController {
 
@@ -49,20 +53,46 @@ public class BorderController {
         // remove previous controller mob if entity is set or alive
         if (getEntity() != null) getEntity().remove();
 
+        for (Entity mob : getWorld().getEntities()) {
+            if (mob.name().contains(getCustomName())){
+                mob.remove();
+            }
+        }
+
         Location safeLocation = getSafeBorderCenter();
 
         // spawn entity
-        Entity entity = getWorld().spawnEntity(
+        LivingEntity entity = (LivingEntity) getWorld().spawnEntity(
                 safeLocation, getEntityType(), CreatureSpawnEvent.SpawnReason.CUSTOM);
+
+        ItemStack boots = new ItemStack(Material.LEATHER_BOOTS);
+        boots.addEnchantment(Enchantment.FROST_WALKER, 2);
+        ItemMeta meta = boots.getItemMeta();
+        meta.setUnbreakable(true);
+
+        boots.setItemMeta(meta);
+
+        if (entity.getEquipment() != null) {
+            entity.getEquipment().setBoots(boots);
+        }
+
         entity.getChunk().load(true);
         // set entity info
         entity.customName(getCustomName());
+
         entity.setPersistent(true);
-        entity.setInvulnerable(true);
         entity.setPortalCooldown(10 ^ 60);
         entity.setVisualFire(false);
         entity.setGlowing(true);
         entity.setCustomNameVisible(true);
+        entity.getEquipment().setBootsDropChance(0);
+        entity.addPotionEffect(
+                new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE,
+                        PotionEffect.INFINITE_DURATION,
+                        5,
+                        false,
+                        false
+                ));
 
         NBTEntity nbt = new NBTEntity(entity);
         nbt.setBoolean("Saddle", true);
@@ -77,6 +107,15 @@ public class BorderController {
 
 
         positionTracker = entity.getLocation();
+
+        // clear previous force loaded chunks
+
+        for (Chunk forceLoadedChunk : getWorld().getForceLoadedChunks()) {
+            if (forceLoadedChunk == positionTracker.getChunk()) {
+                getWorld().getForceLoadedChunks().remove(positionTracker.getChunk());
+            }
+        }
+
         /*
         run periodical event where the border is updated to the current position of the entity
          */
@@ -91,17 +130,17 @@ public class BorderController {
                 // like in the Nether, pausing the updates for the controller mob
                 // prevents potential errors caused by the entity unloading and
                 // appearing to not exist, which could lead to duplicate tasks.
+                if (getWorld().getPlayers().isEmpty()) {
+                    getEntity().getLocation().getChunk().setForceLoaded(true);
+                    return;
+                }
 
                 if (!getEntity().getWorld().getName().equalsIgnoreCase(getWorld().getName())) {
                     getEntity().teleport(getSafeBorderCenter());
                 }
 
-                if (getWorld().getPlayers().isEmpty()) {
-                    return;
-                }
-
                 // checks for the controller mob
-                if (getEntity() == null || !getEntity().getType().equals(getEntityType())) {
+                if (getEntity() == null || getEntity().getType() != getEntityType()) {
                     this.cancel();
                 }
                 if (getEntity().isDead()) {
@@ -122,19 +161,26 @@ public class BorderController {
                     getEntity().teleport(getSafeBorderCenter());
                 }
 
-                double distance = positionTracker.distance(entity.getLocation());
+                double distance = positionTracker.distance(getEntity().getLocation());
 
-                if (distance > 15) {
-                    positionTracker = entity.getLocation();
+                if (distance > 8) {
+                    positionTracker = getEntity().getLocation();
                     return; // skip updating because border is moving too fast
                 }
 
-                positionTracker = entity.getLocation();
+                if (distance < 2) {
+                    return;
+                }
+
+
+
+                positionTracker = getEntity().getLocation();
+
                 // set the world border position to the controller mob's current position
                 getWorld().getWorldBorder().setCenter(getEntity().getLocation().clone());
 
             }
-        }.runTaskTimer(getPlugin(), 20L, 20L);
+        }.runTaskTimer(getPlugin(), 1L, 1L);
         return this;
     }
 
@@ -204,37 +250,44 @@ public class BorderController {
         return this;
     }
 
+
     public Location getSafeBorderCenter() {
-        Location location = getWorld().getWorldBorder().getCenter().clone();
+        Block closestSafeBlock = null;
+        double closestDistance = Double.MAX_VALUE;
+
+        Location center = getWorld().getWorldBorder().getCenter();
 
         int maxHeight = getWorld().getMaxHeight();
         int minHeight = getWorld().getMinHeight();
-        if (getWorld().getLogicalHeight() == 256) { // cheat sheet to identify world as the nether
-            maxHeight = 120; // few blocks lower to avoid the nether bedrock roof
+
+
+
+        if (getWorld().getLogicalHeight() == 256) {
+            maxHeight = 120; // Lower limit for Nether
         }
 
-        Block safeBlock = null;
+        for (int y = minHeight; y <= maxHeight; y++) {
+            Block currentBlock = getWorld().getBlockAt(center.getBlockX(), y, center.getBlockZ());
 
-        for (int i = minHeight; i <= maxHeight; i++) {
+            if (isSafeBlock(currentBlock)) {
+                double distance = Math.abs(y - 64);
 
-            location.setY(i); // set y-level (from minHeight to maxHeight)
-            Block block = location.getBlock();
-
-            if (safeBlock != null && i > getWorld().getSeaLevel() - 1 && i < getWorld().getSeaLevel() + 25) {
-                break;
+                if (distance < closestDistance) {
+                    closestSafeBlock = currentBlock;
+                    closestDistance = distance;
+                }
             }
-
-            if (block.getType().isSolid()) continue;
-            if (block.getRelative(BlockFace.UP).getType().isSolid()) continue;
-
-            safeBlock = block;
         }
 
-        if (safeBlock == null) {
-            // set to the sea/lava level of the world instead
-            safeBlock = location.set(location.x(), (maxHeight > 120 ? 32 : 64), location.z()).getBlock();
+        if (closestSafeBlock == null) {
+            return center.set(center.x(), (maxHeight > 120 ? 32 : 64), center.z()).toCenterLocation();
         }
-        return safeBlock.getLocation();
+        return closestSafeBlock.getLocation().add(0, 2, 1).toCenterLocation();
+    }
+
+    private boolean isSafeBlock(Block block) {
+        return block.getType().isSolid()
+                && !block.getRelative(0, 1, 0).isSolid();
     }
 
 

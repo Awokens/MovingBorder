@@ -1,62 +1,86 @@
 package com.awokens.movingborder;
 
 import com.awokens.movingborder.Commands.Admin.BorderCmd;
-import com.awokens.movingborder.Commands.Default.EnderChestCmd;
-import com.awokens.movingborder.Commands.Default.TagsCmd;
-import com.awokens.movingborder.Listeners.Player.Damage;
-import com.awokens.movingborder.Listeners.Player.Join;
-import com.awokens.movingborder.Listeners.Player.Quit;
-import com.awokens.movingborder.Listeners.Player.Chat;
+import com.awokens.movingborder.Commands.Default.*;
+import com.awokens.movingborder.Listeners.Player.*;
 import com.awokens.movingborder.Manager.BorderController;
 import com.awokens.movingborder.Manager.TagManager;
+import com.awokens.movingborder.Manager.WikiManager;
 import com.samjakob.spigui.SpiGUI;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
 public class MovingBorder extends JavaPlugin {
 
-    private static Plugin plugin;
-    private static BorderController WorldController;
-    private static BorderController NetherController;
+    private HashMap<Player, List<Player>> playerTeleportRequests;
+    private HashMap<Player, List<Player>> playerBlockedTeleportRequests;
+    private BorderController WorldController;
+    private BorderController NetherController;
 
-    private static TagManager tagManager;
+    private TagManager tagManager;
 
-    private static SpiGUI spiGUI;
+    private SpiGUI spiGUI;
 
-    public static BorderController getWorldController() { return WorldController; }
-    public static BorderController getNetherController() { return NetherController; }
-    public static Plugin getPlugin() {
-        return plugin;
+    private LuckPerms luckPerms;
+
+    private WikiManager wikiManager;
+
+    public HashMap<Player, List<Player>> getPlayerTeleportRequests() {
+        return this.playerTeleportRequests;
+    }
+    public HashMap<Player, List<Player>> getPlayerBlockedTeleportRequests() {
+        return this.playerBlockedTeleportRequests;
+    }
+    public WikiManager getWikiManager() { return this.wikiManager; }
+
+    public LuckPerms getLuckPermsProvider() {
+        return this.luckPerms;
     }
 
-    public static SpiGUI GUIManager() { return spiGUI; }
+    public BorderController getWorldController() { return WorldController; }
+    public BorderController getNetherController() { return NetherController; }
 
-    public static TagManager getTagManager() { return tagManager; }
+    public SpiGUI GUIManager() { return spiGUI; }
+
+    public TagManager getTagManager() { return tagManager; }
+
 
     @Override
     public void onLoad() {
         CommandAPI.onLoad(new CommandAPIBukkitConfig(this).shouldHookPaperReload(true));
         // register commands here
 
-        new BorderCmd();
+        new BorderCmd(this);
         new EnderChestCmd();
-        new TagsCmd();
+        new TagsCmd(this);
+        new CommandsCmd();
+        new DiscordCmd();
+        new HomeCmd(this);
+        new WikiCmd(this);
+        new TpaCmd(this);
     }
 
     @Override
     public void onEnable() {
         // Plugin startup logic
 
-        plugin = this;
+        playerTeleportRequests = new HashMap<>();
+        playerBlockedTeleportRequests = new HashMap<>();
+
+        luckPerms = LuckPermsProvider.get();
+        wikiManager = new WikiManager();
         tagManager = new TagManager(this);
         spiGUI = new SpiGUI(this);
 
@@ -89,10 +113,13 @@ public class MovingBorder extends JavaPlugin {
                 .start();
 
         boolean result = registerListeners(this, List.of(
-                new Chat(),
-                new Quit(),
-                new Join(),
-                new Damage()
+                new PlayerChat(),
+                new PlayerQuit(),
+                new PlayerJoin(this),
+                new PlayerDamage(this),
+                new PlayerEnderSignal(),
+                new PlayerBlockBreak(),
+                new PlayerDeath()
         ));
 
         if (!result) {
