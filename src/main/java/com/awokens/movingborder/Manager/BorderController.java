@@ -22,6 +22,8 @@ import java.util.Objects;
 
 public class BorderController {
 
+
+    private int cooldown_penalty;
     private Plugin plugin;
 
     private BukkitTask ControllerTask;
@@ -116,6 +118,7 @@ public class BorderController {
             }
         }
 
+//        this.cooldown_penalty = 20 * 5;
         /*
         run periodical event where the border is updated to the current position of the entity
          */
@@ -156,20 +159,22 @@ public class BorderController {
                     return;
                 }
 
-                if (getEntity().getTicksLived() > (20 * 60 * 5)) {
-                    getEntity().setTicksLived(1);
-                    getEntity().teleport(getSafeBorderCenter());
-                }
+//                if (getEntity().getTicksLived() > (20 * 60 * 5)) {
+//                    getEntity().setTicksLived(1);
+//                    getEntity().teleport(getSafeBorderCenter());
+//                }
 
                 double distance = positionTracker.distance(getEntity().getLocation());
 
-                if (distance > 8) {
-                    positionTracker = getEntity().getLocation();
-                    return; // skip updating because border is moving too fast
+                if (cooldown_penalty > 0) {
+                    cooldown_penalty -= 1;
+                    return; // on cooldown due to border moving too faster
                 }
 
-                if (distance < 2) {
-                    return;
+                if (distance > 1.2) {
+                    positionTracker = getEntity().getLocation();
+                    cooldown_penalty = 20;
+                    return; // skip updating because border is moving too fast
                 }
 
 
