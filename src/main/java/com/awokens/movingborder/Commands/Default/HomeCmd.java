@@ -168,12 +168,4 @@ public class HomeCmd implements Listener {
         return location;
     }
 
-    //
-    //    public boolean hasBossBarToggled(Player player) {
-    //        // Obtain CachedMetaData via the LuckPerms API
-    //        CachedMetaData metaData = API.getPlayerAdapter(Player.class).getMetaData(player);
-    //
-    //        // Query & parse the meta value
-    //        return metaData.getMetaValue("bossbar", Boolean::parseBoolean).orElse(true);
-    //    }
 }
