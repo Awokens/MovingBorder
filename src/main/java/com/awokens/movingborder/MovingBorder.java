@@ -70,6 +70,7 @@ public class MovingBorder extends JavaPlugin {
         new HomeCmd(this);
         new WikiCmd(this);
         new TpaCmd(this);
+        new SpawnCmd(this);
     }
 
     @Override
@@ -93,7 +94,7 @@ public class MovingBorder extends JavaPlugin {
         WorldController = new BorderController(this)
                 .setWorld(getServer().getWorld("world"))
                 .setBorderSize(100)
-                .setBorderBuffer(5)
+                .setBorderBuffer(64)
                 .setBorderDamage(1)
                 .setEntityType(EntityType.PIG)
                 .setCustomName(MiniMessage.miniMessage().deserialize(
@@ -104,7 +105,7 @@ public class MovingBorder extends JavaPlugin {
         NetherController = new BorderController(this)
                 .setWorld(getServer().getWorld("world_nether"))
                 .setBorderSize(50)
-                .setBorderBuffer(10)
+                .setBorderBuffer(128)
                 .setBorderDamage(1)
                 .setEntityType(EntityType.STRIDER)
                 .setCustomName(MiniMessage.miniMessage().deserialize(
