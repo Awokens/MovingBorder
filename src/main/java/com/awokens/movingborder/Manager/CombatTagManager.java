@@ -42,16 +42,22 @@ public class CombatTagManager {
                     return;
                 }
 
-                if (!player.isOnline() || !player.isConnected()) {
-                    player.setHealth(0);
+                if (!getPlayer().isOnline() || !getPlayer().isConnected()) {
+                    getPlayer().setHealth(0);
                     this.cancel();
                     return;
                 }
 
-                getPlayer().sendActionBar(MiniMessage.miniMessage().deserialize(
-                        "<red>Combat tag over in <white>" + counter
-                ));
-                counter--;
+                if (getPlayer().getWorld().getWorldBorder().isInside(player.getLocation())) {
+                    getPlayer().sendActionBar(MiniMessage.miniMessage().deserialize(
+                            "<red>Combat tag over in <white>" + counter
+                    ));
+                    counter--;
+                } else {
+                    getPlayer().sendMessage(MiniMessage.miniMessage().deserialize(
+                            "<red>You are outside the border (Combat Tag Frozen)"
+                    ));
+                }
             }
         }.runTaskTimer(getPlugin(), 0L, 20L);
 
@@ -59,6 +65,12 @@ public class CombatTagManager {
 
     public static boolean hasCombat(Player player) {
         return player.hasMetadata(COMBAT_KEY);
+    }
+
+    public static void inCombatMessage(Player player) {
+        player.sendMessage(MiniMessage.miniMessage().deserialize(
+                "<red>You cannot quit or execute specific commands whilst in combat"
+        ));
     }
 
 
